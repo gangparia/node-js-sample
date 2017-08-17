@@ -3,52 +3,34 @@ var app = express();
 var fs = require('fs');
 const readline = require('readline');
 var jsforce = require('jsforce');
+var config = require('./config');
 
-/*
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+console.log(config.userName);
+console.log(config.pwd);
+var conn = new jsforce.Connection();
+conn.login(config.userName, config.pwd, function(err, res) {
+    if (err) {
+        return console.error(err);
+    }
+	console.log(config.accountQuery);
+    conn.query(config.accountQuery, function(err, res) {
+        if (err) {
+            return console.error(err);
+        } else {
+            records.push.apply(records, res.records);
+            if (res.done) {
+                callbackAccount(null, {
+                    result: res,
+                    records: records
+                });
+            } else {
 
-rl.question('Please enter the enviornment login url ', (loginURL) => {
-    rl.question('Please enter username : ', (userName) => {
-		rl.question('Please enter the password with security token ', (pwd) => {
-			rl.question('Please enter query ', (query) => {
-			
-				//var result = (+answer1) + (+answer2);
-				//console.log(`The sum of above two numbers is ${result}`);
-				downloadSalesforceFiles(userName,pwd,query);
-				rl.close();
-			});
-		});
+                query = conn.queryMore(res.nextRecordsUrl, handleResult);
+            }
+        }
+        console.log(res);
     });
-});*/
-
-function downloadSalesforceFiles(userName,pwd,query){
-	var conn = new jsforce.Connection();
-	conn.login('pankaj@sharepoint.com', '123topcoder54iMFCJsvAwHHWpUhAob6hunF', function(err, res) {
-		if (err) {
-			return console.error(err);
-		}
-		conn.query('SELECT Id, Name,(SELECT id ,CreatedDate , Name FROM Attachments) FROM Account', function(err, res) {
-			if (err) {
-				return console.error(err);
-			} else {
-				records.push.apply(records, res.records);
-				if (res.done) {
-					callbackAccount(null, {
-						result: res,
-						records: records
-					});
-				} else {
-
-					query = conn.queryMore(res.nextRecordsUrl, handleResult);
-				}
-			}
-			console.log(res);
-		});
-	});
-}
+});
 /*var conn = jsforce.registry.getConnection('test@4winds.co.il'); // the connection name you established
 	  
       // Doing = 'Account';
@@ -90,7 +72,7 @@ var callbackAccount = function(err, result) {
             console.log(res.records[i].Name);
             console.log(res.records[i].Name + 'Have Attachments');
             var AccountName = (res.records[i].Name).replace(',', '').replace('.', '_').replace(/ /g, '_');
-            var dir = '/' + AccountName;
+            var dir = config.folderDir + AccountName;
 			
             console.log(dir + ' ' + !fs.existsSync(dir));
             if (!fs.existsSync(dir)) {
